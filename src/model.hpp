@@ -2,6 +2,7 @@
 #define __MODELUSER_H__
 
 #include "connect_db.hpp"
+#include <iostream>
 #include <vector>
 #include <string>
 
@@ -13,6 +14,9 @@ public:
     TextModel();
     ~TextModel() {}
 
+    void set(string database);
+    string get();
+
     bool add(string text1, string text2);
     vector<vector<string> > search(string field, string value);
     vector<vector<string> > read(string field, string value);
@@ -23,7 +27,8 @@ public:
 
 private:
     Connect::SqliteDB conn;
-    const char *database = "storage.db";
+    string current_database;
+    const string DEFAULT_DB = "storage.db"; // default
 
 };
 

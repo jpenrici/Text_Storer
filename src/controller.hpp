@@ -52,6 +52,8 @@ private:
 
     // MODEL CONTROL
     TextModel info;
+    string get_db();
+    int set_db(string database);
     int add_info(string text1, string text2);
     int update_info(string id, string text1, string text2);
     int remove_info(string id);
@@ -60,21 +62,26 @@ private:
 
     // GUI VIEW CONTROL
     GUIApp *pGui;
+
+    Gtk::Label *pLbl_id;
+    Gtk::Label *pLbl_text1;
+    Gtk::Label *pLbl_text2;
+    Gtk::Label *pLbl_inform;
+    Gtk::Label *pLbl_status;
+
     Gtk::Button *pBtn_insert;
     Gtk::Button *pBtn_update;
     Gtk::Button *pBtn_delete;
     Gtk::Button *pBtn_export;
     Gtk::Button *pBtn_search;
     Gtk::Button *pBtn_clean;
-    Gtk::Label *pLbl_id;
-    Gtk::Label *pLbl_text1;
-    Gtk::Label *pLbl_text2;
-    Gtk::Label *pLbl_inform;
-    Gtk::Label *pLbl_status;
-    Gtk::SearchEntry *pTxt_search;
+
     Gtk::Entry *pTxt_text1;
-    Gtk::Entry *pTxt_text2;
     Gtk::TreeView *pTreeView;
+    Gtk::TextView *pTxt_text2;
+    Gtk::SearchEntry *pTxt_search;
+    Gtk::FileChooserButton *pBtn_file;
+
     Glib::RefPtr<Gtk::ListStore> m_refTreeModel;
     Glib::RefPtr<Gtk::TreeSelection> m_TreeSelection;
 
@@ -85,6 +92,7 @@ private:
     void gui_search();
     void gui_view();
     void gui_clean();
+    void gui_file();
     void gui_select_row_treeView();
     void gui_update_treeView(vector<vector<string> > result);
 
@@ -106,8 +114,13 @@ private:
 
     ModelColumns m_Columns;
 
-    const string CSV_PATH = "csvStorage.csv";
+    // Default
+    string csv_path = "csvStorage.csv";
+    const string LABEL_TEXT1 = "Text #1";
+    const string LABEL_TEXT2 = "Text #2";
     const string DELIM = ";";
+    const bool EXPORT_ALL = true;
+
 };
 
 #endif // __CONTROLLER_H__

@@ -12,13 +12,16 @@ int Controller::Gui()
     auto refBuilder = Gtk::Builder::create();
     try {
         refBuilder->add_from_file("TextStorerGui.glade");
-    } catch (const Glib::FileError &ex) {
+    }
+    catch (const Glib::FileError &ex) {
         cerr << "FileError: " << ex.what() << endl;
         return EXIT_FAILURE;
-    } catch (const Glib::MarkupError &ex) {
+    }
+    catch (const Glib::MarkupError &ex) {
         cerr << "MarkupError: " << ex.what() << endl;
         return EXIT_FAILURE;
-    } catch (const Gtk::BuilderError &ex) {
+    }
+    catch (const Gtk::BuilderError &ex) {
         cerr << "BuilderError: " << ex.what() << endl;
         return EXIT_FAILURE;
     }
@@ -30,6 +33,7 @@ int Controller::Gui()
     pBtn_export = nullptr;
     pBtn_search = nullptr;
     pBtn_clean = nullptr;
+    pBtn_file = nullptr;
     pLbl_id = nullptr;
     pLbl_text1 = nullptr;
     pLbl_text2 = nullptr;
@@ -40,59 +44,71 @@ int Controller::Gui()
     pTxt_text2 = nullptr;
     pTreeView = nullptr;
 
-    refBuilder->get_widget_derived("appWindow", pGui);
-    refBuilder->get_widget("btn_insert", pBtn_insert);
-    refBuilder->get_widget("btn_update", pBtn_update);
-    refBuilder->get_widget("btn_delete", pBtn_delete);
-    refBuilder->get_widget("btn_export", pBtn_export);
-    refBuilder->get_widget("btn_search", pBtn_search);
-    refBuilder->get_widget("btn_clean", pBtn_clean);
-    refBuilder->get_widget("lbl_id", pLbl_id);
-    refBuilder->get_widget("lbl_text1", pLbl_text1);
-    refBuilder->get_widget("lbl_text2", pLbl_text2);
-    refBuilder->get_widget("lbl_inform", pLbl_inform);
-    refBuilder->get_widget("lbl_status", pLbl_status);
-    refBuilder->get_widget("txt_search", pTxt_search);
-    refBuilder->get_widget("txt_text1", pTxt_text1);
-    refBuilder->get_widget("txt_text2", pTxt_text2);
-    refBuilder->get_widget("treeView", pTreeView);
+    try {
+        refBuilder->get_widget_derived("appWindow", pGui);
+        refBuilder->get_widget("btn_insert", pBtn_insert);
+        refBuilder->get_widget("btn_update", pBtn_update);
+        refBuilder->get_widget("btn_delete", pBtn_delete);
+        refBuilder->get_widget("btn_export", pBtn_export);
+        refBuilder->get_widget("btn_search", pBtn_search);
+        refBuilder->get_widget("btn_clean", pBtn_clean);
+        refBuilder->get_widget("btn_file", pBtn_file);
+        refBuilder->get_widget("lbl_id", pLbl_id);
+        refBuilder->get_widget("lbl_text1", pLbl_text1);
+        refBuilder->get_widget("lbl_text2", pLbl_text2);
+        refBuilder->get_widget("lbl_inform", pLbl_inform);
+        refBuilder->get_widget("lbl_status", pLbl_status);
+        refBuilder->get_widget("txt_search", pTxt_search);
+        refBuilder->get_widget("txt_text1", pTxt_text1);
+        refBuilder->get_widget("txt_text2", pTxt_text2);
+        refBuilder->get_widget("treeView", pTreeView);
 
-    if (pBtn_insert) {
         pBtn_insert->signal_clicked().connect(sigc::mem_fun(*this,
                                               &Controller::gui_insert));
-    }
 
-    if (pBtn_update) {
         pBtn_update->signal_clicked().connect(sigc::mem_fun(*this,
                                               &Controller::gui_update));
-    }
 
-    if (pBtn_delete) {
         pBtn_delete->signal_clicked().connect(sigc::mem_fun(*this,
                                               &Controller::gui_delete));
-    }
 
-    if (pBtn_export) {
         pBtn_export->signal_clicked().connect(sigc::mem_fun(*this,
                                               &Controller::gui_export));
-    }
 
-    if (pBtn_search) {
         pBtn_search->signal_clicked().connect(sigc::mem_fun(*this,
                                               &Controller::gui_search));
-    }
 
-    if (pBtn_clean) {
         pBtn_clean->signal_clicked().connect(sigc::mem_fun(*this,
                                              &Controller::gui_clean));
+
+        pBtn_file->signal_selection_changed().connect(sigc::mem_fun(*this,
+                &Controller::gui_file));
+
+        pLbl_text1->set_text(LABEL_TEXT1);
+        pLbl_text2->set_text(LABEL_TEXT2);
+
+        m_refTreeModel = Gtk::ListStore::create(m_Columns);
+        pTreeView->set_model(m_refTreeModel);
+
+        m_TreeSelection = pTreeView->get_selection();
+        m_TreeSelection->signal_changed().connect(sigc::mem_fun(*this,
+                &Controller::gui_select_row_treeView));
+
+        auto filter_sqlite3 = Gtk::FileFilter::create();
+        filter_sqlite3->set_name("SQLite3 files");
+        filter_sqlite3->add_pattern("*.db");
+        pBtn_file->add_filter(filter_sqlite3);
+
+        // auto filter_any = Gtk::FileFilter::create();
+        // filter_any->set_name("Any files");
+        // filter_any->add_pattern("*");
+        // pBtn_file->add_filter(filter_any);
+
     }
-
-    m_refTreeModel = Gtk::ListStore::create(m_Columns);
-    pTreeView->set_model(m_refTreeModel);
-
-    m_TreeSelection = pTreeView->get_selection();
-    m_TreeSelection->signal_changed().connect(sigc::mem_fun(*this,
-            &Controller::gui_select_row_treeView));
+    catch (exception &e) {
+        cout << "There was an unexpected error.\n" << e.what() << endl;
+        return EXIT_FAILURE;
+    }
 
     if (pGui) {
         cout << "GUI started." << endl;
@@ -107,6 +123,7 @@ int Controller::Gui()
     delete pBtn_export;
     delete pBtn_search;
     delete pBtn_clean;
+    delete pBtn_file;
     delete pLbl_id;
     delete pLbl_text1;
     delete pLbl_text2;
@@ -124,7 +141,7 @@ int Controller::Gui()
 void Controller::gui_insert()
 {
     string title = pTxt_text1->get_text();
-    string subject = pTxt_text2->get_text();
+    string subject = pTxt_text2->get_buffer()->get_text();
     int result = add_info(title, subject);
 
     if (result == 1) {
@@ -137,7 +154,7 @@ void Controller::gui_update()
 {
     string id = pLbl_id->get_text();
     string title = pTxt_text1->get_text();
-    string subject = pTxt_text2->get_text();
+    string subject = pTxt_text2->get_buffer()->get_text();
     int result = update_info(id, title, subject);
 
     if (result == 1) {
@@ -183,23 +200,33 @@ void Controller::gui_export()
         return;
     }
 
-    vector<vector<string> > table {{"ID", pLbl_text1->get_text(), pLbl_text2->get_text()}};
+    vector<vector<string> > table;
+    table.push_back({"#ID", pLbl_text1->get_text(), pLbl_text2->get_text()});
     table.insert(end(table), begin(result), end(result));
+    ofstream csvOut(csv_path);
 
-    ofstream csvOut(CSV_PATH);
+    unsigned int start = 1;
+    if (EXPORT_ALL) {
+        start = 0;
+    }
 
     string str;
     for (auto item : table) {
         str = "";
-        for (auto value : item) {
-            str += value + DELIM;
+        for (unsigned int i = start; i < item.size(); ++i) {
+            str += item[i];
+            if (i < item.size() - 1) {
+                str += DELIM;
+            }
         }
         csvOut << str << '\n';
     }
-
     csvOut.close();
-    str = "saved: " +  CSV_PATH;
+
+    // Output
+    str = "saved: " +  csv_path;
     pLbl_status->set_text(str);
+    cout << str << '\n';
 }
 
 void Controller::gui_clean()
@@ -214,11 +241,21 @@ void Controller::gui_clean()
     pBtn_delete->set_sensitive(false);
 
     pTxt_text1->set_text("");
-    pTxt_text2->set_text("");
+    pTxt_text2->get_buffer()->set_text("");
 
     pLbl_id->set_text("");
-    pLbl_status->set_text("");
-    pLbl_inform->set_text("Insert a new info.");
+}
+
+void Controller::gui_file()
+{
+    string database = pBtn_file->get_filename();
+
+    int result = set_db(database);
+    if (result) {
+        gui_clean();
+    }
+
+    cout << "Current: " << database << '\n';
 }
 
 void Controller::gui_select_row_treeView()
@@ -235,10 +272,10 @@ void Controller::gui_select_row_treeView()
         auto row = *iter;
         pLbl_id->set_text(row[m_Columns.m_col_0]);
         pTxt_text1->set_text(row[m_Columns.m_col_1]);
-        pTxt_text2->set_text(row[m_Columns.m_col_2]);
+        pTxt_text2->get_buffer()->set_text(row[m_Columns.m_col_2]);
     }
 
-    pLbl_inform->set_text("Update email or Remove info.");
+    pLbl_inform->set_text("Update or Remove info.");
 }
 
 void Controller::gui_update_treeView(vector<vector<string> > result)
@@ -246,10 +283,12 @@ void Controller::gui_update_treeView(vector<vector<string> > result)
     m_TreeSelection->unselect_all();
     m_refTreeModel->clear();
 
+    pLbl_inform->set_text(get_db());
     if (result.size() < 2) {
         pLbl_status->set_text("No info to display.");
         return;
-    } else {
+    }
+    else {
         pLbl_status->set_text(to_string(result.size() - 1) + " values found.");
     }
 
@@ -272,6 +311,21 @@ void Controller::gui_update_treeView(vector<vector<string> > result)
 /*
  * MODEL CONTROL
  */
+string Controller::get_db()
+{
+    return info.get();
+}
+
+int Controller::set_db(string database)
+{
+    if (database == "") {
+        return ERROR_UNDEFINED;
+    }
+
+    info.set(database);
+    return NO_ERROR;
+}
+
 int Controller::add_info(string title, string subject)
 {
     if (title == "" || subject == "") {

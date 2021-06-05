@@ -2,11 +2,22 @@
 
 TextModel::TextModel()
 {
-    conn.command(database,
+    current_database = DEFAULT_DB;
+    conn.command(current_database.c_str(),
                  "CREATE TABLE IF NOT EXISTS Storage ("  \
                  "ID INTEGER PRIMARY KEY AUTOINCREMENT," \
                  "text1 TEXT NOT NULL," \
                  "text2 TEXT NOT NULL);");
+}
+
+void TextModel::set(string database)
+{
+    current_database = database;
+}
+
+string TextModel::get()
+{
+    return current_database;
 }
 
 bool TextModel::add(string text1, string text2)
@@ -17,7 +28,7 @@ bool TextModel::add(string text1, string text2)
 
     string sql = "INSERT INTO Storage (text1, text2) VALUES ";
     sql += "('" + text1 + "','"  + text2 + "');";
-    conn.command(database, sql.c_str());
+    conn.command(current_database.c_str(), sql.c_str());
 
     return true;
 }
@@ -34,19 +45,22 @@ vector<vector<string> > TextModel::search(string field, string value)
     if (field == "text1") {
         sql = "SELECT * FROM Storage ";
         sql += "WHERE text1 LIKE '%" + value + "%' ;";
-    } else if (field == "text2") {
+    }
+    else if (field == "text2") {
         sql = "SELECT * FROM Storage ";
         sql += "WHERE text2 LIKE '%" + value + "%' ;";
-    } else if (field == "all") {
+    }
+    else if (field == "all") {
         sql = "SELECT * FROM Storage ";
         sql += "WHERE text1 LIKE '%" + value + "%' ";
         sql += "OR text2 LIKE '%" + value + "%';";
-    } else {
+    }
+    else {
         result.clear();
         return result;
     }
 
-    return conn.command(database, sql.c_str());
+    return conn.command(current_database.c_str(), sql.c_str());
 }
 
 vector<vector<string> > TextModel::read(string field, string value)
@@ -63,7 +77,7 @@ vector<vector<string> > TextModel::read(string field, string value)
     }
 
     string sql = "SELECT * FROM Storage WHERE " + field + "='" + value + "';";
-    return conn.command(database, sql.c_str());
+    return conn.command(current_database.c_str(), sql.c_str());
 }
 
 vector<vector<string> > TextModel::read(int id)
@@ -73,7 +87,7 @@ vector<vector<string> > TextModel::read(int id)
 
 vector<vector<string> > TextModel::read()
 {
-    return conn.command(database, "SELECT * FROM Storage;");
+    return conn.command(current_database.c_str(), "SELECT * FROM Storage;");
 }
 
 bool TextModel::update(int id, string text1, string text2)
@@ -84,11 +98,11 @@ bool TextModel::update(int id, string text1, string text2)
 
     string sql = "UPDATE Storage set text1='" + text1 + "'";
     sql += " WHERE ID=" + to_string(id) + ";";
-    conn.command(database, sql.c_str());
+    conn.command(current_database.c_str(), sql.c_str());
 
     sql = "UPDATE Storage set text2='" + text2 + "'";
     sql += " WHERE ID=" + to_string(id) + ";";
-    conn.command(database, sql.c_str());
+    conn.command(current_database.c_str(), sql.c_str());
 
     return true;
 }
@@ -100,7 +114,7 @@ bool TextModel::remove(int id)
     }
 
     string sql = "DELETE from Storage where ID=" + to_string(id) + ";";
-    conn.command(database, sql.c_str());
+    conn.command(current_database.c_str(), sql.c_str());
 
     return true;
 }
